@@ -1,0 +1,67 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Next.js & Frontend dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Build & output artifacts
+/.next/
+/out/
+/build
+/dist
+*.tsbuildinfo
+next-env.d.ts
+
+# Python & Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+backend/.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# SIFT runtime data — never commit user data or generated artifacts
+**/data/storage/
+**/data/chroma/
+**/data/chroma_phase6_e2e/
+**/data/models/
+**/data/reports/
+
+# Database files
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/*.db-journal
+**/*.db-wal
+test.db
+
+# System & IDE
+.DS_Store
+Thumbs.db
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.vercel
+.idea/
+.vscode/
