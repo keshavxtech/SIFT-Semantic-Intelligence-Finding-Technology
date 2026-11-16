@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import JSONResponse
 
 from app.api.routes import api_router
@@ -82,6 +83,19 @@ def root_status():
             "health": f"{settings.API_V1_PREFIX}/health",
         }
     )
+
+
+@app.get("/api/docs", include_in_schema=False)
+def api_docs_endpoint():
+    return get_swagger_ui_html(
+        openapi_url="/api/openapi.json",
+        title=f"{settings.PROJECT_NAME} - Swagger UI",
+    )
+
+
+@app.get("/api/openapi.json", include_in_schema=False)
+def api_openapi_endpoint():
+    return JSONResponse(content=app.openapi())
 
 
 if __name__ == "__main__":

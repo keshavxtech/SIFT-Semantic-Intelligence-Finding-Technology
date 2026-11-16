@@ -5,29 +5,23 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination:
-          process.env.NODE_ENV === "development"
-            ? "http://127.0.0.1:8001/api/:path*"
-            : "/api/",
-      },
-      {
-        source: "/docs",
-        destination:
-          process.env.NODE_ENV === "development"
-            ? "http://127.0.0.1:8001/docs"
-            : "/api/",
-      },
-      {
-        source: "/openapi.json",
-        destination:
-          process.env.NODE_ENV === "development"
-            ? "http://127.0.0.1:8001/openapi.json"
-            : "/api/",
-      },
-    ];
+    if (process.env.NODE_ENV === "development") {
+      return [
+        {
+          source: "/api/:path*",
+          destination: "http://127.0.0.1:8001/api/:path*",
+        },
+        {
+          source: "/docs",
+          destination: "http://127.0.0.1:8001/docs",
+        },
+        {
+          source: "/openapi.json",
+          destination: "http://127.0.0.1:8001/openapi.json",
+        },
+      ];
+    }
+    return [];
   },
 };
 

@@ -169,6 +169,15 @@ def test_vercel_path_correction_logic():
     assert correct_vercel_path(scope6) == "/api/health"
     assert scope6["path"] == "/api/health"
 
+    # Case 7: Direct request to /api/index.py falls back to /api
+    scope7 = {
+        "type": "http",
+        "path": "/api/index.py",
+        "headers": [(b"host", b"sift.vercel.app")],
+    }
+    assert correct_vercel_path(scope7) == "/api"
+    assert scope7["path"] == "/api"
+
 
 def test_initialization_error_handler_returns_safe_generic_response():
     """Verifies fallback error handler returns generic 500 without leaking secrets, paths, or tracebacks."""
@@ -344,4 +353,38 @@ def test_chroma_vector_store_lazy_import():
     # ChromaVectorStore instantiates cleanly
     chroma_store = ChromaVectorStore()
     assert chroma_store.expected_dimension == 384
+
+
+def test_next_config_rewrites_disabled_in_production_to_prevent_404():
+    """
+    Verifies that next.config.ts only returns rewrites when NODE_ENV === 'development'.
+    In production, returning rewrites causes Next.js to intercept /api/* and return 404
+    before Vercel's Python serverless function can handle the request.
+    """
+    root_dir = Path(__file__).resolve().parent.parent.parent
+    next_config_path = root_dir / "next.config.ts"
+    assert next_config_path.exists(), "next.config.ts must exist at repository root"
+    content = next_config_path.read_text(encoding="utf-8")
+
+    assert 'if (process.env.NODE_ENV === "development")' in content
+    assert "return [];" in content
+    assert 'destination: "http://127.0.0.1:8001/api/:path*"' in content
+    assert 'destination: "/api/"' not in content, "Must not rewrite to internal Next.js /api/ route in production"
+
+
+def test_api_docs_and_openapi_endpoints():
+    """Verifies that /api/docs and /api/openapi.json endpoints return valid docs and openapi schema."""
+    from app.main import api_docs_endpoint, api_openapi_endpoint
+
+    docs_res = api_docs_endpoint()
+    assert docs_res.status_code == 200
+    assert "Swagger UI" in docs_res.body.decode("utf-8")
+
+    openapi_res = api_openapi_endpoint()
+    assert openapi_res.status_code == 200
+    openapi_data = json.loads(openapi_res.body.decode("utf-8"))
+    assert "openapi" in openapi_data
+    assert "paths" in openapi_data
+    assert "/api/health" in openapi_data["paths"]
+
 

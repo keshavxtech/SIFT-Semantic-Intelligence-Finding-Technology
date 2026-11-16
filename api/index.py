@@ -20,7 +20,7 @@ logger = logging.getLogger("sift.vercel")
 def correct_vercel_path(scope: dict) -> str:
     """
     Restores the original request path from Vercel/Next.js rewrite headers if present.
-    When Next.js or Vercel rewrites /api/:path* to /api/, the original requested URI
+    When Next.js or Vercel rewrites /api/:path* to /api/index.py, the original requested URI
     is supplied in 'x-forwarded-uri', 'x-matched-path', 'x-nextjs-rewritten-path',
     or 'x-invoke-path'. This restores the original path so FastAPI routes match as expected.
     """
@@ -37,6 +37,9 @@ def correct_vercel_path(scope: dict) -> str:
             forwarded_path = raw_forwarded.decode("utf-8", errors="ignore").split("?")[0]
             if forwarded_path and not forwarded_path.endswith("index.py"):
                 scope["path"] = forwarded_path
+        # Normalize /api/index.py fallback to /api
+        if scope.get("path") in ("/api/index.py", "api/index.py"):
+            scope["path"] = "/api"
     return scope.get("path", "")
 
 
