@@ -218,17 +218,15 @@ def test_python_version_file_exists_and_matches():
     assert version_str == "3.12"
 
 
-def test_vercel_json_functions_max_duration():
-    """Verifies vercel.json defines maxDuration for the Python entrypoint."""
+def test_vercel_json_functions_omitted_for_auto_discovery():
+    """Verifies vercel.json omits 'functions' block so Vercel auto-detects Python serverless functions without [unused_function] error."""
     root_dir = Path(__file__).resolve().parent.parent.parent
     vercel_json_path = root_dir / "vercel.json"
     with open(vercel_json_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
-    assert "functions" in config
-    function_config = config["functions"].get("api/**/*.py") or config["functions"].get("api/index.py")
-    assert function_config is not None, "Missing functions configuration for Python API"
-    assert function_config.get("maxDuration") == 60
+    assert "functions" not in config, "The 'functions' block must be omitted to prevent Vercel [unused_function] errors"
+    assert "rewrites" in config
 
 
 def test_serverless_temporary_storage_path_resolution(monkeypatch):
