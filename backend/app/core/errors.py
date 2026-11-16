@@ -158,6 +158,51 @@ class LLMRateLimitError(SIFTException):
         )
 
 
+class EmbeddingProviderNotConfiguredError(SIFTException):
+    def __init__(
+        self,
+        message: str = "Embedding provider is not configured. Please set HUGGINGFACE_API_KEY in your environment or backend/.env.",
+    ):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details={"provider": "unconfigured"},
+        )
+
+
+class VectorStoreNotConfiguredError(SIFTException):
+    def __init__(
+        self,
+        message: str = "Vector store is not configured. Please set PINECONE_API_KEY in your environment or backend/.env.",
+    ):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details={"provider": "unconfigured"},
+        )
+
+
+class DatabaseNotConfiguredError(SIFTException):
+    def __init__(
+        self,
+        message: str = "Database is not configured. Please set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN in your environment or backend/.env.",
+    ):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details={"provider": "turso_unconfigured"},
+        )
+
+
+class DatabaseConnectionError(SIFTException):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            details=details or {},
+        )
+
+
 class ChatSessionNotFoundError(SIFTException):
     def __init__(self, session_id: str):
         super().__init__(

@@ -5,6 +5,7 @@ from app.core.logging import logger
 from app.rag.chunking.models import Chunk
 from app.rag.embeddings.base import BaseEmbeddingProvider
 from app.rag.embeddings.config import EmbeddingConfig, DEFAULT_EMBEDDING_CONFIG
+from app.rag.embeddings.factory import get_embedding_provider
 from app.rag.embeddings.models import (
     ChunkEmbedding,
     EmbeddingGenerationResponse,
@@ -26,7 +27,7 @@ class EmbeddingService:
         embed_repo: EmbeddingRepository = embedding_repository,
         chunk_svc: ChunkingService = chunking_service,
     ):
-        self.provider = provider or SentenceTransformerProvider(config=DEFAULT_EMBEDDING_CONFIG)
+        self.provider = provider or get_embedding_provider()
         self.doc_repo = doc_repo
         self.embed_repo = embed_repo
         self.chunk_svc = chunk_svc

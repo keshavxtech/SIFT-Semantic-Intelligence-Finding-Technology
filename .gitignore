@@ -28,6 +28,7 @@ backend/.venv/
 venv/
 env/
 .pytest_cache/
+.test_tmp/
 .coverage
 htmlcov/
 .mypy_cache/
@@ -65,3 +66,7 @@ yarn-error.log*
 .vercel
 .idea/
 .vscode/
+
+# Local scripts
+scripts/
+

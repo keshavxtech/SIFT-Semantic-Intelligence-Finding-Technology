@@ -2,9 +2,8 @@ import math
 import threading
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import chromadb
 from app.core.config import settings
-from app.core.errors import DimensionMismatchError, IndexingError
+from app.core.errors import DimensionMismatchError, IndexingError, VectorStoreNotConfiguredError
 from app.core.logging import logger
 from app.rag.retrieval.base import BaseVectorStore
 
@@ -24,14 +23,21 @@ class ChromaVectorStore(BaseVectorStore):
         self.persist_directory = persist_directory or settings.vector_db_path
         self.collection_name = collection_name or settings.CHROMA_COLLECTION_NAME
         self.expected_dimension = expected_dimension
-        self._client: Optional[chromadb.ClientAPI] = None
+        self._client: Optional[Any] = None
         self._collection = None
         self._lock = threading.RLock()
 
-    def _get_client(self) -> chromadb.ClientAPI:
+    def _get_client(self) -> Any:
         if self._client is None:
             with self._lock:
                 if self._client is None:
+                    try:
+                        import chromadb
+                    except ImportError:
+                        raise VectorStoreNotConfiguredError(
+                            "ChromaDB is not installed in this environment. "
+                            "In production, configure VECTOR_STORE_PROVIDER='pinecone'."
+                        )
                     self.persist_directory.mkdir(parents=True, exist_ok=True)
                     logger.info(
                         f"Initializing Persistent ChromaDB client at '{self.persist_directory.resolve()}'"
@@ -247,5 +253,19 @@ class ChromaVectorStore(BaseVectorStore):
         return self.get_document_chunk_count(document_id) > 0
 
 
+def get_vector_store(provider_type: Optional[str] = None) -> BaseVectorStore:
+    """
+    Factory resolving active vector store implementation based on configuration.
+    Supports local persistent ChromaDB and cloud Pinecone vector store.
+    """
+    name = (provider_type or settings.VECTOR_STORE_PROVIDER).lower().strip()
+    if name == "pinecone":
+        from app.rag.retrieval.pinecone_vector_store import PineconeVectorStore
+        return PineconeVectorStore()
+    else:
+        # Default local persistent ChromaDB
+        return ChromaVectorStore()
+
+
 # Default singleton instance
-vector_store = ChromaVectorStore()
+vector_store = get_vector_store()

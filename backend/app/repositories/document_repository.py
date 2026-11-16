@@ -1,36 +1,25 @@
-import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-from typing import Generator, List, Optional
+from typing import Any, Generator, List, Optional
 from app.core.config import settings
+from app.core.database import get_db_connection
 from app.core.logging import logger
 from app.models.document import Document, DocumentTag, DocumentType, ProcessingStatus
 
 
 class DocumentRepository:
-    """SQLite-backed persistence repository for document metadata and extraction records."""
+    """Persistence repository for document metadata and extraction records."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Optional[Path] = None, provider: Optional[str] = None):
         self._db_path = db_path or settings.database_path
+        self._provider = provider or ("sqlite" if (db_path and db_path != settings.database_path) else settings.DATABASE_PROVIDER)
         self._init_db()
 
     @contextmanager
-    def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        self._db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(self._db_path), timeout=15.0)
-        conn.row_factory = sqlite3.Row
-        try:
-            # Enable WAL mode and foreign keys
-            conn.execute("PRAGMA journal_mode=WAL;")
-            conn.execute("PRAGMA synchronous=NORMAL;")
+    def _get_connection(self) -> Generator[Any, None, None]:
+        with get_db_connection(db_path=self._db_path, provider=self._provider) as conn:
             yield conn
-            conn.commit()
-        except Exception:
-            conn.rollback()
-            raise
-        finally:
-            conn.close()
 
     def _init_db(self) -> None:
         """Initializes tables and indexes if they do not exist."""
@@ -64,10 +53,10 @@ class DocumentRepository:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(processing_status);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_tag ON documents(tag);")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_documents_created ON documents(created_at DESC);")
-        logger.info(f"Initialized SQLite document repository at: {self._db_path}")
+        logger.info(f"Initialized document repository (provider: {self._provider}) at: {self._db_path}")
 
     @staticmethod
-    def _row_to_document(row: sqlite3.Row) -> Document:
+    def _row_to_document(row: Any) -> Document:
         return Document(
             id=row["document_id"],
             original_filename=row["original_filename"],
