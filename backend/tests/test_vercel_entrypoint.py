@@ -83,7 +83,7 @@ def test_vercel_json_configuration():
     rewrites = config["rewrites"]
     api_rewrite = next((r for r in rewrites if r.get("source") == "/api/:path*"), None)
     assert api_rewrite is not None, "Missing rewrite for /api/:path*"
-    assert api_rewrite.get("destination") == "/api/index.py"
+    assert api_rewrite.get("destination") == "/api"
 
 
 def test_requirements_files_consistency():
