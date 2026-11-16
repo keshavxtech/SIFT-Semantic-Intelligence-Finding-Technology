@@ -226,8 +226,9 @@ def test_vercel_json_functions_max_duration():
         config = json.load(f)
 
     assert "functions" in config
-    assert "api/index.py" in config["functions"]
-    assert config["functions"]["api/index.py"].get("maxDuration") == 60
+    function_config = config["functions"].get("api/**/*.py") or config["functions"].get("api/index.py")
+    assert function_config is not None, "Missing functions configuration for Python API"
+    assert function_config.get("maxDuration") == 60
 
 
 def test_serverless_temporary_storage_path_resolution(monkeypatch):
